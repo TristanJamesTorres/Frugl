@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, type ChangeEvent, type DragEvent, type FormEvent } from 'react';
+import { useEffect, useState, type ChangeEvent, type DragEvent, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { Camera, UploadCloud, X, AlertCircle, Loader2 } from '@/components/icons';
+import { Camera, UploadCloud, X, AlertCircle, CheckCircle2 } from '@/components/icons';
 import { resizeImage } from '@/lib/client-image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -49,9 +49,20 @@ export default function SellForm({ sellerName, location }: Props) {
   // UI state
   const [loading, setLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
+  const [analysisComplete, setAnalysisComplete] = useState(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [error, setError] = useState('');
   const [mobileTab, setMobileTab] = useState<'form' | 'preview'>('form');
   const [isPhotoDragOver, setIsPhotoDragOver] = useState(false);
+
+  useEffect(() => {
+    if (!loading) return;
+
+    const timer = window.setInterval(() => {
+      setElapsedSeconds((elapsed) => elapsed + 1);
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [loading]);
 
   async function addPhotos(incoming: File[]) {
     if (incoming.length === 0) return;
@@ -145,6 +156,8 @@ export default function SellForm({ sellerName, location }: Props) {
     }
 
     setLoading(true);
+    setAnalysisComplete(false);
+    setElapsedSeconds(0);
     setError('');
     setStatusMessage('Uploading and analyzing photos with AI assistant...');
 
@@ -178,26 +191,38 @@ export default function SellForm({ sellerName, location }: Props) {
         throw new Error(data.error || 'Failed to identify laptop and create draft.');
       }
 
-      setStatusMessage('Identification complete! Redirecting to draft review...');
+      setAnalysisComplete(true);
+      setStatusMessage('Analysis complete. Opening your draft...');
+      await new Promise((resolve) => window.setTimeout(resolve, 500));
       router.push(`/sell/${data.draftListingId}`);
     } catch (err: any) {
       setError(err.message || 'Something went wrong during identification.');
       setLoading(false);
       setStatusMessage('');
+      setAnalysisComplete(false);
     }
   }
 
   // Skip AI manual entry option
   async function handleSkipAI() {
     setLoading(true);
+    setAnalysisComplete(false);
+    setElapsedSeconds(0);
+    setError('');
+    setStatusMessage('Creating your draft...');
     try {
       const res = await fetch('/api/listings', { method: 'POST' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to create blank draft.');
+      setAnalysisComplete(true);
+      setStatusMessage('Draft ready. Opening it now...');
+      await new Promise((resolve) => window.setTimeout(resolve, 500));
       router.push(`/sell/${data.id}`);
     } catch (err: any) {
       setError(err.message || 'Could not create listing.');
       setLoading(false);
+      setStatusMessage('');
+      setAnalysisComplete(false);
     }
   }
 
@@ -243,9 +268,23 @@ export default function SellForm({ sellerName, location }: Props) {
             )}
 
             {loading && (
-              <div className='mb-4 flex items-center gap-3 rounded-xl border border-lavender-300 bg-lavender-100 p-4 text-sm text-primary'>
-                <Loader2 size={18} className='animate-spin shrink-0' />
-                <span>{statusMessage || 'Processing...'}</span>
+              <div
+                role='status'
+                aria-live='polite'
+                aria-busy={!analysisComplete}
+                className='mb-4 flex items-start gap-3 rounded-xl border border-lavender-300 bg-lavender-100 p-4 text-sm text-primary'
+              >
+                {analysisComplete
+                  ? <CheckCircle2 size={18} className='mt-0.5 shrink-0 text-green-700' />
+                  : <span className='sell-loading-spinner mt-0.5' aria-hidden='true' />}
+                <div className='min-w-0 flex-1'>
+                  <p>{statusMessage || 'Processing...'}</p>
+                  {!analysisComplete && (
+                    <p className='mt-1 text-xs text-primary/70'>
+                      Still working · {Math.floor(elapsedSeconds / 60)}:{String(elapsedSeconds % 60).padStart(2, '0')} elapsed. Keep this page open.
+                    </p>
+                  )}
+                </div>
               </div>
             )}
 
@@ -520,8 +559,10 @@ export default function SellForm({ sellerName, location }: Props) {
             >
               {loading ? (
                 <>
-                  <Loader2 size={16} className='animate-spin mr-2' />
-                  Analyzing...
+                  {analysisComplete
+                    ? <CheckCircle2 size={16} className='mr-2' />
+                    : <span className='sell-loading-spinner sell-loading-spinner-small mr-2 text-primary' aria-hidden='true' />}
+                  {analysisComplete ? 'Opening draft...' : 'Analyzing...'}
                 </>
               ) : (
                 'Continue to draft'

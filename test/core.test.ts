@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { rankCandidates, combineConfidence, modelLabel, type CatalogModel } from '../src/lib/ai/match';
+import { rankCandidates, combineConfidence, hasClearLead, modelLabel, type CatalogModel } from '../src/lib/ai/match';
+import { modelPrefill } from '../src/lib/ai/prefill';
 import { tierFor } from '../src/lib/ai/tier';
 import { detectScamPhrases } from '../src/lib/scam';
 import { suggestCondition } from '../src/lib/condition';
@@ -41,6 +42,26 @@ const SAMPLE_CATALOG: CatalogModel[] = [
 ];
 
 describe('Catalog Matching & Ranking', () => {
+  it('prefills model identity only and preserves seller-entered details', () => {
+    expect(modelPrefill(SAMPLE_CATALOG[0], {
+      cpu: 'Seller-entered CPU',
+      ram: '16GB',
+      notes: 'Seller notes',
+    })).toEqual({
+      model_id: '1',
+      brand: 'Lenovo',
+      model: 'ThinkPad T14 Gen 2 (20W0)',
+      title: 'Lenovo ThinkPad T14 Gen 2 (20W0)',
+      cpu: 'Seller-entered CPU',
+      gpu: null,
+      screen_size: null,
+      ram: '16GB',
+      storage: null,
+      description: 'Seller notes',
+      ai_filled: ['title', 'brand', 'model'],
+    });
+  });
+
   it('identifies exact model number match on sticker text', () => {
     const candidates = rankCandidates(
       SAMPLE_CATALOG,
@@ -75,6 +96,30 @@ describe('Catalog Matching & Ranking', () => {
     expect(candidates.length).toBeGreaterThan(0);
     expect(candidates[0].modelId).toBe('3');
     expect(candidates[0].brand).toBe('Dell');
+  });
+
+  it('does not guess a catalog model from brand alone', () => {
+    const candidates = rankCandidates(SAMPLE_CATALOG, {
+      brand: 'Dell',
+      series: null,
+      modelNumber: null,
+      visibleText: ['Dell'],
+      confidence: 0.9,
+      hintsUsed: [],
+    });
+
+    expect(candidates).toHaveLength(0);
+  });
+
+  it('only prefills a suggested model when the top catalog match is clear', () => {
+    expect(hasClearLead([
+      { modelId: 'top', score: 0.8, brand: 'ASUS', series: 'TUF Gaming F15', modelNumber: null },
+      { modelId: 'second', score: 0.6, brand: 'ASUS', series: 'TUF Gaming A15', modelNumber: null },
+    ])).toBe(true);
+    expect(hasClearLead([
+      { modelId: 'top', score: 0.8, brand: 'ASUS', series: 'TUF Gaming F15', modelNumber: null },
+      { modelId: 'second', score: 0.8, brand: 'ASUS', series: 'TUF Gaming A15', modelNumber: null },
+    ])).toBe(false);
   });
 
   it('determines confidence tiers accurately', () => {

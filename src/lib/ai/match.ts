@@ -34,13 +34,20 @@ export function rankCandidates(catalog: CatalogModel[], vision: VisionResult, hi
     } else {
       const have = tokens(m.series);
       const matched = have.filter((t) => want.has(t)).length;
-      const overlap = matched / Math.max(have.length, want.size, 1);
-      score = (brand && brand === norm(m.brand) ? 0.4 : 0) + overlap * 0.6;
+      if (matched > 0) {
+        const overlap = matched / Math.max(have.length, want.size);
+        score = (brand && brand === norm(m.brand) ? 0.4 : 0) + overlap * 0.6;
+      }
     }
     return { modelId: m.id, score: Math.round(score * 100) / 100, brand: m.brand, series: m.series, modelNumber: m.model_number };
   });
 
   return scored.filter((c) => c.score >= 0.3).sort((a, b) => b.score - a.score).slice(0, 5);
+}
+
+export function hasClearLead(candidates: Candidate[], minimumGap = 0.15): boolean {
+  const [top, second] = candidates;
+  return Boolean(top && top.score >= 0.6 && (!second || top.score - second.score >= minimumGap));
 }
 
 // Agreement between the photo and the catalog raises confidence; disagreement lowers it.

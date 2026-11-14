@@ -3,10 +3,10 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { withinLimit } from '@/lib/usage';
 import { isImage, processImage, uploadHintFile, uploadListingPhoto } from '@/lib/images';
 import { GeminiIdentifier } from '@/lib/ai/gemini';
-import { combineConfidence, modelLabel, rankCandidates, type CatalogModel } from '@/lib/ai/match';
+import { combineConfidence, hasClearLead, rankCandidates, type CatalogModel } from '@/lib/ai/match';
+import { modelPrefill } from '@/lib/ai/prefill';
 import type { Hints } from '@/lib/ai/types';
 import { tierFor } from '@/lib/ai/tier';
-import { buildDescription } from '@/lib/description';
 import { priceFor } from '@/lib/price';
 
 export const maxDuration = 60;
@@ -18,28 +18,6 @@ const text = (form: FormData, key: string) => {
   const v = form.get(key);
   return typeof v === 'string' && v.trim() ? v.trim() : undefined;
 };
-
-function draftFromModel(m: CatalogModel, hints: Hints) {
-  const ram = hints.ram || m.default_ram || null;
-  const storage = hints.storage || m.default_storage || null;
-  const cpu = hints.cpu || m.cpu || null;
-  return {
-    model_id: m.id,
-    brand: m.brand,
-    model: modelLabel(m),
-    title: [m.brand, m.series, cpu, ram && storage ? ram + '/' + storage : ram || storage].filter(Boolean).join(' '),
-    cpu,
-    gpu: hints.gpu || m.gpu,
-    screen_size: m.screen_size,
-    ram,
-    storage,
-    description: buildDescription('simple', {
-      brand: m.brand, model: m.series, cpu: cpu ?? undefined, gpu: (hints.gpu || m.gpu) ?? undefined,
-      ram: ram ?? undefined, storage: storage ?? undefined, screen_size: m.screen_size, notes: hints.notes,
-    }),
-    ai_filled: ['title', 'brand', 'model', 'description', 'cpu', 'gpu', 'screen_size', 'ram', 'storage'],
-  };
-}
 
 export async function POST(request: Request) {
   const { supabase, user, profile } = await apiUser();
@@ -111,7 +89,11 @@ export async function POST(request: Request) {
   try {
     const sys = form.get('systemInfoImage');
     const rec = form.get('receiptOrBoxImage');
-    if (isImage(sys)) systemInfoPath = await uploadHintFile(admin, user.id, draft.id, await processImage(Buffer.from(await (sys as File).arrayBuffer())), 'system-info');
+    if (isImage(sys)) {
+      const image = await processImage(Buffer.from(await (sys as File).arrayBuffer()));
+      buffers.push(image);
+      systemInfoPath = await uploadHintFile(admin, user.id, draft.id, image, 'system-info');
+    }
     if (isImage(rec)) receiptPath = await uploadHintFile(admin, user.id, draft.id, await processImage(Buffer.from(await (rec as File).arrayBuffer())), 'receipt-or-box');
   } catch {
     // optional files: ignore problems
@@ -132,21 +114,45 @@ export async function POST(request: Request) {
   const candidates = vision ? rankCandidates((catalog ?? []) as CatalogModel[], vision, hints) : [];
   const confidence = vision ? combineConfidence(vision, candidates, hints) : 0;
   const tier = tierFor(confidence);
-  const model = tier === 'auto' ? (catalog ?? []).find((m: any) => m.id === candidates[0]?.modelId) : null;
+  const canPrefillModel = tier === 'auto' || (tier === 'suggest' && hasClearLead(candidates));
+  const model = canPrefillModel
+    ? (catalog ?? []).find((m: any) => m.id === candidates[0]?.modelId) ?? null
+    : null;
 
   // 6. fill the draft
+  const detectedBrand = vision?.brand ?? hints.brand ?? '';
+  const detectedSeries = vision?.series ?? hints.series ?? '';
+  const detectedModelNumber = vision?.modelNumber ?? hints.modelNumber ?? '';
+  const detectedModel = detectedSeries || detectedModelNumber;
   const patch: Record<string, any> = model
-    ? draftFromModel(model as CatalogModel, hints)
+    ? modelPrefill(model as CatalogModel, hints)
     : {
-        brand: vision?.brand ?? hints.brand ?? '',
+        brand: detectedBrand,
+        model: detectedModel,
+        title: [detectedBrand, detectedModel].filter(Boolean).join(' '),
         cpu: hints.cpu ?? null,
         gpu: hints.gpu ?? null,
         ram: hints.ram ?? null,
         storage: hints.storage ?? null,
         description: hints.notes ?? '',
-        ai_filled: vision?.brand ? ['brand'] : [],
+        ai_filled: [
+          ...(vision?.brand ? ['brand'] : []),
+          ...(vision?.series || vision?.modelNumber ? ['model'] : []),
+          ...(vision?.brand && (vision?.series || vision?.modelNumber) ? ['title'] : []),
+        ],
       };
-  await supabase.from('listings').update(patch).eq('id', draft.id);
+  const { data: updatedDraft, error: updateError } = await supabase
+    .from('listings')
+    .update(patch)
+    .eq('id', draft.id)
+    .select('id')
+    .maybeSingle();
+  if (updateError || !updatedDraft) {
+    console.error('identify draft update failed:', updateError?.message ?? 'No listing row was updated.');
+    return json({
+      error: 'The photo draft was created, but its details could not be saved. Open it from My Listings and enter the details manually.',
+    }, 500);
+  }
   const suggestion = model ? await priceFor(supabase, (model as any).id, null) : null;
 
   // 7. keep the AI run for the accuracy test (Section 13)
@@ -155,7 +161,9 @@ export async function POST(request: Request) {
     .from('identification_results')
     .insert({
       listing_id: draft.id, candidates, brand: vision?.brand, series: vision?.series, model_number: vision?.modelNumber,
-      visible_text: vision?.visibleText ?? [], confidence, tier, provider: 'gemini:' + (process.env.GEMINI_MODEL || 'default'), hints_used: hintsUsed,
+      visible_text: vision?.visibleText ?? [], confidence, tier,
+      provider: aiError ? 'gemini:error' : 'gemini:' + (process.env.GEMINI_MODEL || 'default'),
+      hints_used: hintsUsed,
     })
     .select('id')
     .single();

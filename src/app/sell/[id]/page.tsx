@@ -1,8 +1,19 @@
+import { Suspense } from 'react';
 import { notFound, redirect } from 'next/navigation';
 import { requireMarketplaceUser } from '@/lib/auth';
 import EditDraftForm from './EditDraftForm';
 
-export default async function SellDraftPage({ params }: { params: Promise<{ id: string }> }) {
+type Props = { params: Promise<{ id: string }> };
+
+export default function SellDraftPage({ params }: Props) {
+  return (
+    <Suspense fallback={<div role='status' className='p-6'>Loading your draft...</div>}>
+      <SellDraftContent params={params} />
+    </Suspense>
+  );
+}
+
+async function SellDraftContent({ params }: Props) {
   const { id } = await params;
   const { supabase, user, profile } = await requireMarketplaceUser(`/sell/${id}`);
 

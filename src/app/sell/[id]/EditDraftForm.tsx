@@ -79,6 +79,16 @@ export default function EditDraftForm({ initialListing, userLocation, sellerName
   // Identification results tier
   const ident = initialListing.identification_results?.[0];
   const aiTier = ident?.tier;
+  const aiCandidates = Array.isArray(ident?.candidates) ? ident.candidates : [];
+  const detectedSeries = typeof ident?.series === 'string' ? ident.series.trim() : '';
+  const detectedModelNumber = typeof ident?.model_number === 'string' ? ident.model_number.trim() : '';
+  const recognizedModel = [detectedSeries, detectedModelNumber].filter(Boolean).join(' ');
+  const recognizedIdentity = [ident?.brand, recognizedModel].filter(Boolean).join(' ');
+  const candidateLabels = aiCandidates
+    .slice(0, 3)
+    .map((candidate: any) => [candidate.brand, candidate.series].filter(Boolean).join(' '))
+    .filter(Boolean)
+    .join(', ');
 
   // Auto-fetch price suggestion when modelId or condition changes
   useEffect(() => {
@@ -289,9 +299,19 @@ export default function EditDraftForm({ initialListing, userLocation, sellerName
             <div className='flex items-center gap-2 rounded-xl border border-lavender-300 bg-lavender-100 p-3 text-xs text-primary'>
                 <Sparkles size={16} className='shrink-0 text-plum-700' />
               <span>
-                {aiTier === 'auto'
-                  ? 'AI high confidence: Specs and title were auto-filled from the catalog. Please verify.'
-                  : 'AI suggested matches: Review the specs below and adjust if needed.'}
+                {ident?.provider === 'gemini:error'
+                  ? 'Gemini could not analyze the photos. Check the API key/model, or enter the details manually.'
+                  : aiTier === 'auto'
+                    ? 'AI identified a likely brand and model. Confirm them, then enter the remaining specs and price.'
+                    : initialListing.model_id
+                      ? 'Possible catalog model match selected. Confirm it, then enter the remaining specs and price.'
+                      : candidateLabels
+                        ? `Possible matches: ${candidateLabels}. No single match was clear enough to fill specs automatically.`
+                        : recognizedModel
+                          ? `Gemini read ${recognizedIdentity}, but no single catalog match was confident. Verify the model field or enter its code manually.`
+                          : ident?.brand
+                            ? `Gemini recognized ${ident.brand}, but could not identify its model family. Try a close photo of the model sticker or System Information screen.`
+                            : 'Gemini could not read the brand or model. Try a closer photo of the model sticker or System Information screen.'}
               </span>
             </div>
           )}
@@ -614,7 +634,7 @@ export default function EditDraftForm({ initialListing, userLocation, sellerName
         </div>
         <div className='listing-editor-actions listing-edit-actions'>
           <Button asChild size='sm' variant='outline'>
-            <Link href='/sell'>Previous</Link>
+            <Link href='/sell' replace>Previous</Link>
           </Button>
           <Button
             size='sm'

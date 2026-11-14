@@ -1,7 +1,16 @@
+import { Suspense } from 'react';
 import { requireMarketplaceUser } from '@/lib/auth';
 import SellForm from './SellForm';
 
-export default async function SellPage() {
+export default function SellPage() {
+  return (
+    <Suspense fallback={<div role='status' className='p-6'>Loading sell form...</div>}>
+      <AuthenticatedSellPage />
+    </Suspense>
+  );
+}
+
+async function AuthenticatedSellPage() {
   const { profile } = await requireMarketplaceUser('/sell');
   return (
     <SellForm
