@@ -14,7 +14,6 @@ import {
   faUser as faUserRegular,
 } from '@fortawesome/free-regular-svg-icons';
 import {
-  faBan,
   faBell,
   faBookmark,
   faCamera,
@@ -46,7 +45,6 @@ import {
   faRightFromBracket,
   faShield,
   faShieldHalved,
-  faShieldHeart,
   faDatabase,
   faSpinner,
   faStar,
@@ -86,9 +84,7 @@ function icon(
 
 export const AlertCircle = icon(faCircleExclamation);
 export const AlertTriangle = icon(faTriangleExclamation);
-export const ArrowsRotate = icon(faCircleNotch);
 export const BadgeCheck = icon(faCircleCheck, faCircleCheckRegular);
-export const Ban = icon(faBan);
 export const Bell = icon(faBell, faBellRegular, 'regular');
 export const Bookmark = icon(faBookmark, faBookmarkRegular, 'regular');
 export const Camera = icon(faCamera);
@@ -120,9 +116,7 @@ export const SignOut = icon(faRightFromBracket);
 export const Send = icon(faPaperPlane, faPaperPlaneRegular, 'regular');
 export const Paperclip = icon(faPaperclip);
 export const Shield = icon(faShield);
-export const ShieldAlert = icon(faTriangleExclamation);
 export const ShieldCheck = icon(faShieldHalved);
-export const ShieldHeart = icon(faShieldHeart);
 export const Sparkles = icon(faWandMagicSparkles);
 export const Star = icon(faStar, faStarRegular, 'regular');
 export const Tag = icon(faTag);

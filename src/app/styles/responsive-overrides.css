@@ -505,10 +505,6 @@
     width: 100%;
   }
 
-  .nav-messages {
-    display: none;
-  }
-
   .home-hero {
     --home-hero-height: 27rem;
     grid-template-columns: minmax(0, 1fr);

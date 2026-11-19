@@ -53,10 +53,3 @@ export const staggerContainer = (stagger = 0.06): Variants => ({
   hidden: {},
   visible: { transition: { staggerChildren: stagger, delayChildren: 0.04 } },
 });
-
-export const hoverLift = { y: -2, transition: { duration: duration.fast, ease } };
-export const tap = { scale: 0.97 };
-
-// Keep aliases while existing client components are migrated to the shared names.
-export const EASE_OUT = ease;
-export const DURATION = duration;

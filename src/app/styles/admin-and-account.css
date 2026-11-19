@@ -1278,7 +1278,6 @@ html:has(.admin-dashboard) {
   border-radius: 999px;
 }
 
-.admin-heatmap-privacy-note,
 .admin-heatmap-privacy {
   margin: 0;
   color: var(--muted-foreground);
@@ -1338,16 +1337,6 @@ html:has(.admin-dashboard) {
 .admin-alert-list {
   display: grid;
   align-content: start;
-}
-
-.admin-empty-icon {
-  display: grid;
-  width: 1.9rem;
-  height: 1.9rem;
-  place-items: center;
-  border-radius: 0.65rem;
-  background: var(--lavender-100);
-  color: var(--plum-700);
 }
 
 .admin-alert-copy strong {
@@ -1418,15 +1407,6 @@ html:has(.admin-dashboard) {
   padding: 1.25rem;
   color: var(--plum-900);
   text-align: center;
-}
-
-.admin-empty-icon {
-  width: 2.3rem;
-  height: 2.3rem;
-  margin-bottom: 0.2rem;
-  border-radius: 0.8rem;
-  background: var(--lavender-100);
-  box-shadow: 0 4px 12px rgb(24 13 38 / 6%);
 }
 
 .admin-empty-state > strong {

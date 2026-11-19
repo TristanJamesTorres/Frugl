@@ -22,13 +22,3 @@ export function formatPrivacyCount(count: number, threshold = 3): string {
   }
   return count < threshold ? `Fewer than ${threshold}` : count.toLocaleString();
 }
-
-export function formatPrivacyCountLabel(
-  count: number,
-  singular: string,
-  plural = `${singular}s`,
-  threshold = 3,
-): string {
-  const noun = count < threshold ? plural : pluralize(count, singular, plural);
-  return `${formatPrivacyCount(count, threshold)} ${noun}`;
-}

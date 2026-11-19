@@ -103,17 +103,15 @@ The listing flow can use AI to identify a laptop from photos and suggest a price
 
 ---
 
-## 🗂️ User Roles
+## 🗂️ User Access
 
-| Role       | Description                                                               |
-| ---------- | ------------------------------------------------------------------------- |
-| `guest`     | Browses public marketplace content and listing details                    |
-| `buyer`     | Uses buyer features, including saved listings, offers, and conversations   |
-| `seller`    | Creates and manages listings and responds to buyers                        |
-| `moderator` | Reviews marketplace reports and safety activity                            |
-| `admin`     | Oversees users, listings, reports, and marketplace settings                |
+| Access type  | Description |
+| ------------ | ----------- |
+| Guest        | An unauthenticated visitor who can browse public marketplace pages. |
+| Buyer/Seller | A signed-in member who can buy, message, make offers, and create or manage listings from the same account. Seller verification is tracked separately. |
+| Admin        | An administrator with access to user, listing, report, and marketplace management tools. |
 
-> Access to protected features is enforced by the application and Supabase row-level security policies.
+These are the app's user-facing access groups. A guest is not a stored profile role, and seller verification is a profile flag rather than a separate access group. Protected features are enforced by the application and Supabase row-level security policies.
 
 ### Sessions and Account Security
 
@@ -379,6 +377,8 @@ src/
       auth/session/route.ts             — Create or validate the application session
       auth/session/heartbeat/route.ts   — Extend the idle timeout after user activity
       account/avatar/route.ts           — Account avatar upload
+      account/delete/route.ts           — Account deletion
+      account/private-contact/route.ts  — Private contact details
       admin/backups/route.ts            — List backups and dispatch backup jobs
       admin/backups/[filename]/route.ts — Authenticated private backup download
       admin/listings/[id]/review/route.ts — Approve or reject a listing
@@ -392,6 +392,7 @@ src/
       listings/[id]/status/route.ts     — Listing status changes
       listings/[id]/view/route.ts       — Listing view tracking
       locations/route.ts                — Location suggestions
+      conversations/route.ts            — Conversation operations
       messages/route.ts                 — Message operations
       models/route.ts                   — Laptop model lookups
       price-suggestion/route.ts         — Model and condition price suggestions
@@ -464,14 +465,12 @@ src/
     BottomBar.tsx
     EmptyState.tsx
     Footer.tsx
-    GoogleSignInButton.tsx
     HeaderNavIcons.tsx
     HeaderSearch.tsx
     HeroListingCarousel.tsx
     ListingActions.tsx
     ListingCard.tsx
     ListingCardSaveButton.tsx
-    ListingCardSkeleton.tsx
     ListingDetails.tsx
     LocationAutocomplete.tsx
     NotificationBell.tsx
@@ -498,10 +497,9 @@ src/
       TabIndicator.tsx
       Skeleton.tsx
       Banner.tsx
+      LoadingOverlayContext.tsx
     ui/                                 — Small reusable UI primitives
-      badge.tsx
       button.tsx
-      card.tsx
       input.tsx
       label.tsx
       textarea.tsx
@@ -535,7 +533,6 @@ src/
     client-image.ts
     condition.ts
     constants.ts
-    description.ts
     format.ts
     location-validation.ts
     images.ts
@@ -549,6 +546,7 @@ src/
     usage-policy.ts
     usage.ts
     utils.ts
+  proxy.ts                              — Refreshes the Supabase session for matched requests
 supabase/                               — Ordered database setup and update scripts
   01_schema.sql
   02_policies.sql
