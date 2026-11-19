@@ -119,7 +119,7 @@ a[class*='-cta'] {
   border-radius: 9999px !important;
 }
 
-.profile-menu-signout {
+button.profile-menu-signout {
   border-radius: 0 !important;
 }
 

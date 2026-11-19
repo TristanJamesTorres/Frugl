@@ -1,10 +1,11 @@
 import { Suspense } from 'react';
 import { requireMarketplaceUser } from '@/lib/auth';
+import BrandLoader from '@/components/motion/BrandLoader';
 import SellForm from './SellForm';
 
 export default function SellPage() {
   return (
-    <Suspense fallback={<div role='status' className='p-6'>Loading sell form...</div>}>
+    <Suspense fallback={<BrandLoader />}>
       <AuthenticatedSellPage />
     </Suspense>
   );

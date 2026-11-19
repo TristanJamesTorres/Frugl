@@ -26,8 +26,8 @@ export function BrandLoaderView() {
           className='brand-loader-icon'
           aria-hidden='true'
           initial={false}
-          animate={reduceMotion ? { scale: 1 } : { scale: [1, 1.08, 1] }}
-          transition={reduceMotion ? { duration: 0 } : { duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
+          animate={reduceMotion ? { scale: 1 } : { scale: [1, 1.18, 1] }}
+          transition={reduceMotion ? { duration: 0 } : { duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
         >
           <Laptop size={56} />
         </m.div>
