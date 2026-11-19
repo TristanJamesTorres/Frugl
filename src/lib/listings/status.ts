@@ -2,7 +2,7 @@ export type SellerListingStatusPatch = {
   status: 'available' | 'reserved' | 'sold';
   reserved_by?: string | null;
   reserved_until?: null;
-  buyer_id?: null;
+  buyer_id?: string | null;
   sold_transaction_id?: null;
 };
 

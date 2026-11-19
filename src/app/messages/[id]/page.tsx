@@ -1,13 +1,16 @@
-import { notFound, redirect } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import { requireMarketplaceUser } from '@/lib/auth';
+import { createAdminClient } from '@/lib/supabase/admin';
 import ChatRoom from './ChatRoom';
 
 export default async function ConversationPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { supabase, user } = await requireMarketplaceUser(`/messages/${id}`);
+  const { user } = await requireMarketplaceUser(`/messages/${id}`);
 
-  // Fetch conversation, listing, participants, and messages
-  const { data: conv } = await supabase
+  // Scope the privileged read to the signed-in participant. This prevents a
+  // stale conversations SELECT policy from hiding a newly created chat.
+  const admin = createAdminClient();
+  const { data: conv, error: conversationError } = await admin
     .from('conversations')
     .select(`
       id,
@@ -20,17 +23,17 @@ export default async function ConversationPage({ params }: { params: Promise<{ i
       messages (*)
     `)
     .eq('id', id)
+    .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
     .maybeSingle();
 
+  if (conversationError) {
+    console.error('Could not load participant conversation:', conversationError.message);
+    throw new Error('Could not load this conversation. Please refresh and try again.');
+  }
   if (!conv) notFound();
 
-  // Check if current user is part of this conversation
-  if (conv.buyer_id !== user.id && conv.seller_id !== user.id) {
-    redirect('/messages');
-  }
-
   // Mark other's unread messages as read
-  await supabase
+  await admin
     .from('messages')
     .update({ read_at: new Date().toISOString() })
     .eq('conversation_id', id)
@@ -38,7 +41,7 @@ export default async function ConversationPage({ params }: { params: Promise<{ i
     .is('read_at', null);
 
   // Fetch offers tied to this listing by this buyer
-  const { data: offers } = await supabase
+  const { data: offers } = await admin
     .from('offers')
     .select('*')
     .eq('listing_id', conv.listing_id)

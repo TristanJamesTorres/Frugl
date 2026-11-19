@@ -6,6 +6,7 @@ import {
   normalizeLocationKey,
 } from '../src/lib/admin/location-aggregates';
 import {
+  getCompletedSaleBuyerIds,
   isLocationSchemaMissing,
   splitAdminLocationAudiences,
 } from '../src/lib/admin/member-locations';
@@ -13,6 +14,14 @@ import { pluralize } from '../src/lib/format';
 import { sanitizeLocationSearchQuery } from '../src/lib/location-validation';
 
 describe('admin location aggregates', () => {
+  it('only counts buyers after a listing is marked sold', () => {
+    expect(getCompletedSaleBuyerIds([
+      { buyer_id: 'accepted-buyer', status: 'reserved' },
+      { buyer_id: 'sold-buyer', status: 'sold' },
+      { buyer_id: null, status: 'sold' },
+    ])).toEqual(new Set(['sold-buyer']));
+  });
+
   it('splits all members, sellers, and buyers by marketplace activity with overlapping users counted once in All', () => {
     const profiles = [
       { id: 'buyer-only', role: 'buyer', location: 'San Pablo, Laguna' },
@@ -106,7 +115,7 @@ describe('admin location aggregates', () => {
     expect(sanitizeLocationSearchQuery('23 Example Street')).toBeNull();
   });
 
-  it('sanitizes unmapped addresses and does not expose labels below the privacy threshold', () => {
+  it('sanitizes unmapped addresses while allowing single-member city locations', () => {
     const aggregate = aggregateLocations([
       { id: 'one', location: '23 Example Street, Springfield, Example Province' },
       { id: 'two', location: '23 Example Street, Springfield, Example Province' },
@@ -115,14 +124,36 @@ describe('admin location aggregates', () => {
     ]);
     const output = JSON.stringify(aggregate);
 
-    expect(aggregate.unmapped).toEqual([{ name: 'Springfield', count: 3 }]);
-    expect(aggregate.suppressedPeople).toBe(1);
+    expect(aggregate.unmapped).toEqual([
+      { name: 'Springfield', count: 3 },
+      { name: 'Private District', count: 1 },
+    ]);
+    expect(aggregate.suppressedPeople).toBe(0);
     expect(output).not.toContain('Example Street');
-    expect(output).not.toContain('Private District');
     expect(output).not.toContain('one');
   });
 
-  it('shows a location shared by two unique people', () => {
+  it('shows a city location even when only one person is mapped there', () => {
+    const aggregate = aggregateLocations([
+      {
+        id: 'one-buyer',
+        location: 'Quezon City, Metro Manila',
+        location_lat: 14.676,
+        location_lng: 121.043,
+      },
+    ]);
+
+    expect(aggregate.areas).toEqual([{
+      name: 'Quezon City',
+      province: 'Metro Manila',
+      lat: 14.68,
+      lng: 121.04,
+      count: 1,
+    }]);
+    expect(aggregate.suppressedPeople).toBe(0);
+  });
+
+  it('still counts unique people once when multiple members share a city', () => {
     const aggregate = aggregateLocations([
       { id: 'same-id', location: 'Quezon City, Metro Manila' },
       { id: 'same-id', location: 'Quezon City, Metro Manila' },
@@ -138,7 +169,8 @@ describe('admin location aggregates', () => {
       lng: 121.33,
       count: 2,
     }]);
-    expect(aggregate.suppressedPeople).toBe(1);
+    expect(aggregate.unmapped).toEqual([{ name: 'Quezon City', count: 1 }]);
+    expect(aggregate.suppressedPeople).toBe(0);
   });
 
   it('formats privacy-safe counts and singular/plural labels', () => {

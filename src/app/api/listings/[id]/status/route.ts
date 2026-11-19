@@ -35,7 +35,24 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     return json({ error: 'Could not load listing buyers. Apply supabase/16_listing_sales_and_reviews.sql and try again.' }, 503);
   }
 
-  return json({ buyers: buyers ?? [], reservedBy: listing.reserved_by });
+  const { data: acceptedOffer, error: acceptedOfferError } = await supabase
+    .from('offers')
+    .select('buyer_id')
+    .eq('listing_id', id)
+    .eq('status', 'accepted')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (acceptedOfferError) {
+    console.error('Could not load the accepted offer buyer:', acceptedOfferError.message);
+    return json({ error: 'Could not verify the accepted offer for this listing.' }, 500);
+  }
+
+  return json({
+    buyers: buyers ?? [],
+    reservedBy: listing.reserved_by,
+    acceptedOfferBuyerId: acceptedOffer?.buyer_id ?? null,
+  });
 }
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -79,7 +96,25 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (rawRating !== null && typeof rawRating !== 'number') {
       return json({ error: 'Rate the selected buyer from 1 to 5 stars before completing the sale.' }, 400);
     }
-    const buyerId: string | null = typeof rawBuyerId === 'string' ? rawBuyerId : null;
+    const { data: acceptedOffer, error: acceptedOfferError } = await supabase
+      .from('offers')
+      .select('buyer_id')
+      .eq('listing_id', id)
+      .eq('status', 'accepted')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (acceptedOfferError) {
+      console.error('Could not verify the accepted offer buyer:', acceptedOfferError.message);
+      return json({ error: 'Could not verify the accepted offer buyer.' }, 500);
+    }
+
+    const acceptedBuyerId = acceptedOffer?.buyer_id ?? null;
+    const requestedBuyerId = typeof rawBuyerId === 'string' ? rawBuyerId : null;
+    if (acceptedBuyerId && requestedBuyerId && requestedBuyerId !== acceptedBuyerId) {
+      return json({ error: 'This sale must be linked to the buyer whose offer you accepted.' }, 409);
+    }
+    const buyerId: string | null = acceptedBuyerId ?? requestedBuyerId;
     const rating: number | null = typeof rawRating === 'number' ? rawRating : null;
     if (buyerId !== null && !UUID_PATTERN.test(buyerId)) {
       return json({ error: 'Choose a valid buyer.' }, 400);
@@ -145,6 +180,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     patch = { ...patch, reserved_by: reservedBy };
   }
 
+  // Listing ownership and the allowed status transition were verified above.
   const { data: updated, error: updateError } = await supabase
     .from('listings')
     .update(patch)

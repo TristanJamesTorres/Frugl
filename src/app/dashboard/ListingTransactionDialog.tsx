@@ -36,6 +36,7 @@ export default function ListingTransactionDialog({
 }: Props) {
   const [buyers, setBuyers] = useState<Buyer[]>([]);
   const [selectedBuyerId, setSelectedBuyerId] = useState('');
+  const [acceptedOfferBuyerId, setAcceptedOfferBuyerId] = useState('');
   const [rating, setRating] = useState(0);
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -67,15 +68,34 @@ export default function ListingTransactionDialog({
         const reservedBy = 'reservedBy' in result && typeof result.reservedBy === 'string'
           ? result.reservedBy
           : '';
-        return { buyers: result.buyers, reservedBy };
+        const acceptedOfferBuyerId =
+          'acceptedOfferBuyerId' in result && typeof result.acceptedOfferBuyerId === 'string'
+            ? result.acceptedOfferBuyerId
+            : '';
+        if (
+          acceptedOfferBuyerId &&
+          !result.buyers.some((buyer) => isBuyer(buyer) && buyer.id === acceptedOfferBuyerId)
+        ) {
+          throw new Error('The accepted offer buyer could not be matched to this listing conversation.');
+        }
+        return { buyers: result.buyers, reservedBy, acceptedOfferBuyerId };
       })
-      .then(({ buyers: loadedBuyers, reservedBy }) => {
+      .then(({ buyers: loadedBuyers, reservedBy, acceptedOfferBuyerId }) => {
         if (!active) return;
         setBuyers(loadedBuyers);
-        setSelectedBuyerId(loadedBuyers.some((buyer) => buyer.id === reservedBy) ? reservedBy : '');
+        const acceptedBuyer = mode === 'sold' &&
+          loadedBuyers.some((buyer) => buyer.id === acceptedOfferBuyerId)
+          ? acceptedOfferBuyerId
+          : '';
+        setAcceptedOfferBuyerId(acceptedBuyer);
+        const preferredBuyerId = acceptedBuyer || reservedBy;
+        setSelectedBuyerId(
+          loadedBuyers.some((buyer) => buyer.id === preferredBuyerId) ? preferredBuyerId : '',
+        );
       })
       .catch((loadError: unknown) => {
         if (active) {
+          setAcceptedOfferBuyerId('');
           setError(loadError instanceof Error
             ? loadError.message
             : 'Could not load people who messaged about this listing.');
@@ -88,7 +108,7 @@ export default function ListingTransactionDialog({
     return () => {
       active = false;
     };
-  }, [listingId, open]);
+  }, [listingId, mode, open]);
 
   async function submit() {
     setBusy(true);
@@ -149,7 +169,7 @@ export default function ListingTransactionDialog({
 
       <p className='seller-transaction-help'>
         {mode === 'sold'
-          ? 'Choose who bought this item from people who messaged you. You can also mark it sold without linking a buyer.'
+          ? 'The buyer whose offer you accepted is selected automatically. Choose a rating to complete the sale.'
           : 'Choose who reserved this item from people who messaged you. You can also reserve it without linking a buyer.'}
       </p>
 
@@ -165,6 +185,7 @@ export default function ListingTransactionDialog({
                 name={`buyer-${listingId}`}
                 value={buyer.id}
                 checked={selectedBuyerId === buyer.id}
+                disabled={Boolean(acceptedOfferBuyerId && acceptedOfferBuyerId !== buyer.id)}
                 onChange={() => setSelectedBuyerId(buyer.id)}
               />
               {buyer.avatar_url ? (
@@ -184,6 +205,7 @@ export default function ListingTransactionDialog({
               name={`buyer-${listingId}`}
               value=''
               checked={!selectedBuyerId}
+              disabled={Boolean(acceptedOfferBuyerId)}
               onChange={() => setSelectedBuyerId('')}
             />
             <span>

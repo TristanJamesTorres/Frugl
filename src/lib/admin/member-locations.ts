@@ -46,6 +46,16 @@ export function isLocationSchemaMissing(error: { code?: string; message?: string
   );
 }
 
+export function getCompletedSaleBuyerIds(
+  listings: readonly { buyer_id: string | null; status: string }[],
+): Set<string> {
+  const buyerIds = new Set<string>();
+  for (const listing of listings) {
+    if (listing.status === 'sold' && listing.buyer_id) buyerIds.add(listing.buyer_id);
+  }
+  return buyerIds;
+}
+
 async function loadProfiles(
   supabase: Awaited<ReturnType<typeof createClient>>,
   includeCoordinates: boolean,
@@ -109,11 +119,9 @@ async function loadMarketplaceAudienceIds(
       .order('id')
       .range(from, from + PAGE_SIZE - 1);
     if (error) throw new Error(`Unable to load buyer and seller activity for the admin map: ${error.message}`);
+    for (const buyerId of getCompletedSaleBuyerIds(data ?? [])) buyerIds.add(buyerId);
     for (const listing of data ?? []) {
       sellerIds.add(listing.seller_id);
-      if (listing.buyer_id && (listing.status === 'reserved' || listing.status === 'sold')) {
-        buyerIds.add(listing.buyer_id);
-      }
     }
     if (!data || data.length < PAGE_SIZE) return { sellerIds, buyerIds };
   }

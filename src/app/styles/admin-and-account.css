@@ -1039,6 +1039,14 @@ html:has(.admin-dashboard) {
   box-shadow: 0 2px 6px rgb(24 13 38 / 14%);
 }
 
+.admin-heatmap-switch button.is-active[data-audience='sellers'] {
+  background: #9a3412;
+}
+
+.admin-heatmap-switch button.is-active[data-audience='buyers'] {
+  background: #1e3a8a;
+}
+
 .admin-heatmap-switch button:focus-visible,
 .admin-heatmap-location-button:focus-visible,
 .admin-heatmap-unmapped summary:focus-visible {
@@ -1268,7 +1276,6 @@ html:has(.admin-dashboard) {
   width: 4.5rem;
   height: 0.45rem;
   border-radius: 999px;
-  background: linear-gradient(90deg, #fda4af, #fb7185, #e11d48, #9f1239);
 }
 
 .admin-heatmap-privacy-note,

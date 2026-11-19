@@ -162,11 +162,20 @@ export default function AccountForm({ user, profile, contactNumber, requiresPass
         throw new Error(profileError.message);
       }
 
-      const { error: privateError } = await supabase
-        .from('profile_private')
-        .upsert({ id: user.id, contact_number: contact.trim() || null });
-
-      if (privateError) throw new Error(privateError.message);
+      const privateResponse = await fetch('/api/account/private-contact', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contactNumber: contact }),
+      });
+      const privateResult: unknown = await privateResponse.json();
+      const privateError =
+        typeof privateResult === 'object' &&
+        privateResult !== null &&
+        'error' in privateResult &&
+        typeof privateResult.error === 'string'
+          ? privateResult.error
+          : 'Could not save your private contact number.';
+      if (!privateResponse.ok) throw new Error(privateError);
 
       setToastMessage('Changes have been saved');
       router.refresh();

@@ -1,6 +1,6 @@
 import { formatPrivacyCount } from '../format';
 
-export const LOCATION_PRIVACY_THRESHOLD = 2;
+export const LOCATION_MINIMUM_GROUP_SIZE = 1;
 
 export type LocationPerson = {
   id: string;
@@ -227,7 +227,7 @@ export function aggregateLocations(
   let suppressedPeople = 0;
 
   for (const group of groups.values()) {
-    if (group.count < LOCATION_PRIVACY_THRESHOLD) {
+    if (group.count < LOCATION_MINIMUM_GROUP_SIZE) {
       suppressedPeople += group.count;
       continue;
     }

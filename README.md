@@ -197,14 +197,16 @@ The database setup is provided as numbered SQL scripts in `supabase/`, rather th
 15_chat_alert_status.sql
 16_listing_sales_and_reviews.sql
 17_session_lifecycle.sql
+18_conversation_insert_policy.sql
 ```
 
-Do not rerun the base schema scripts against a project that has already been initialized. Scripts `11`–`17` are follow-up authorization, profile, listing-review, backup-storage, location-coordinate, chat-alert, listing-sale/review, and session-lifecycle changes; apply them once after scripts `01`–`10`.
+Do not rerun the base schema scripts against a project that has already been initialized. Scripts `11`–`18` are follow-up authorization, profile, listing-review, backup-storage, location-coordinate, chat-alert, listing-sale/review, session-lifecycle, and conversation-policy changes; apply them once after scripts `01`–`10`.
 
 Script `13_admin_review_and_backups.sql` already provides listing moderation. Script `15_chat_alert_status.sql` adds the status and staff moderation policy for chat scam alerts.
 Script `16_listing_sales_and_reviews.sql` adds buyer selection, sale transactions, and mutual post-sale reviews.
 Script `17_session_lifecycle.sql` adds server-tracked sessions with a 30-minute inactivity timeout, a 24-hour absolute limit, and revocation when an account is suspended or its role changes. Apply it once before deploying the matching application code.
 Existing sign-ins are not registered in the new session table, so users will need to sign in again after deployment.
+Script `18_conversation_insert_policy.sql` hardens direct authenticated conversation inserts for installations that use the Supabase client path.
 
 The demo listings in `05_demo_laptops_seed.sql` reference static photos under `public/demo-listing-photos/`. Include those assets in the deployed app, then rerun `05_demo_laptops_seed.sql` to add the photo records if the demo listings were seeded earlier. The photo inserts are idempotent.
 
@@ -565,6 +567,7 @@ supabase/                               — Ordered database setup and update sc
   15_chat_alert_status.sql
   16_listing_sales_and_reviews.sql
   17_session_lifecycle.sql
+  18_conversation_insert_policy.sql
 scripts/
   backfill-location-geocodes.ts         — Dry-run-first Photon location cache backfill
 test/

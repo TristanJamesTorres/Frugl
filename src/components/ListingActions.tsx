@@ -114,27 +114,35 @@ export default function ListingActions({
     setBusy(true);
     setNote('');
     try {
-      const { data: existing } = await supabase
-        .from('conversations')
-        .select('id')
-        .eq('listing_id', listingId)
-        .eq('buyer_id', userId)
-        .maybeSingle();
-      if (existing) {
-        router.push('/messages/' + existing.id);
-        return;
-      }
-      const { data, error } = await supabase
-        .from('conversations')
-        .insert({ listing_id: listingId, buyer_id: userId, seller_id: sellerId })
-        .select('id')
-        .single();
-      if (error) {
+      const response = await fetch('/api/conversations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ listingId }),
+      });
+      const result: unknown = await response.json();
+      const conversationId =
+        typeof result === 'object' &&
+        result !== null &&
+        'id' in result &&
+        typeof result.id === 'string'
+          ? result.id
+          : null;
+      if (!response.ok || !conversationId) {
+        const errorMessage =
+          typeof result === 'object' &&
+          result !== null &&
+          'error' in result &&
+          typeof result.error === 'string'
+            ? result.error
+            : 'Could not start a conversation. Please try again.';
         setNoteTone('error');
-        setNote(error.message);
+        setNote(errorMessage);
       } else {
-        router.push('/messages/' + data.id);
+        router.push('/messages/' + conversationId);
       }
+    } catch (error) {
+      setNoteTone('error');
+      setNote(error instanceof Error ? error.message : 'Could not start a conversation. Please try again.');
     } finally {
       setBusy(false);
     }
