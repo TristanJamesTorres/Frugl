@@ -293,7 +293,11 @@ export default function ChatRoom({ conversation, currentUserId, initialOffers }:
             </p>
             {otherParty?.id ? (
               <Link href={`/sellers/${otherParty.id}`} className='message-chat-participant'>
-                {otherParty.name || 'User'} · {isBuyer ? 'Seller' : 'Buyer'}
+                {otherParty.avatar_url && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={otherParty.avatar_url} alt='' />
+                )}
+                <span>{otherParty.name || 'User'} · {isBuyer ? 'Seller' : 'Buyer'}</span>
               </Link>
             ) : null}
           </div>

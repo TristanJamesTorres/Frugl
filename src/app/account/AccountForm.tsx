@@ -440,11 +440,13 @@ export default function AccountForm({ user, profile, contactNumber, requiresPass
                   required
                 />
               </div>
-              <div className='account-settings-field account-setting-bio space-y-1.5'>
+              <div className='account-settings-field space-y-1.5'>
+                <Label htmlFor='profile-location'>Location</Label>
                 <LocationAutocomplete
                   id='profile-location'
                   value={location}
                   required={false}
+                  showLabel={false}
                   onChange={(value, selection) => {
                     setLocation(value);
                     setLocationSelection(selection);

@@ -24,6 +24,7 @@ const iconClasses =
 export default function ProfileMenu({
   userId,
   name,
+  avatarUrl,
   email,
   isAdmin,
   canAccessAdmin,
@@ -31,14 +32,17 @@ export default function ProfileMenu({
 }: {
   userId: string;
   name: string | null;
+  avatarUrl: string | null;
   email: string | undefined;
   isAdmin: boolean;
   canAccessAdmin: boolean;
   unreadPublishedListings: number;
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [failedAvatarUrl, setFailedAvatarUrl] = useState<string | null>(null);
   const anchorRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
+  const initial = name?.trim().charAt(0).toUpperCase() || '?';
 
   return (
     <div className='relative' ref={anchorRef}>
@@ -52,10 +56,18 @@ export default function ProfileMenu({
         className='group/summary flex min-h-[3.2rem] max-w-[15rem] items-center gap-2 rounded-full border border-lavender-300 bg-surface py-1 pl-[0.35rem] pr-[0.8rem] text-plum-900 transition-[border-color,box-shadow] duration-[260ms] ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-plum-700 hover:shadow-[0_0_0_3px_rgb(67_54_79_/_0.12)] focus-visible:border-plum-700 focus-visible:shadow-[0_0_0_3px_rgb(67_54_79_/_0.12)]'
         onClick={() => setIsOpen((open) => !open)}
       >
-        <span className='relative inline-flex shrink-0'>
-          <span className='inline-flex size-[2.3rem] shrink-0 items-center justify-center rounded-full bg-primary-fixed font-semibold text-primary-container'>
-            {(name ?? '?').charAt(0).toUpperCase()}
-          </span>
+        <span className='relative inline-flex size-[2.3rem] shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary-fixed font-semibold text-primary-container'>
+          {avatarUrl && failedAvatarUrl !== avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={avatarUrl}
+              alt=''
+              className='size-full object-cover'
+              onError={() => setFailedAvatarUrl(avatarUrl)}
+            />
+          ) : (
+            initial
+          )}
           {unreadPublishedListings > 0 && (
             <span className='absolute -right-[0.55rem] -top-[0.45rem] z-[1] inline-flex h-[1.1rem] min-w-[1.1rem] items-center justify-center rounded-full bg-destructive px-[0.2rem] text-center text-[0.68rem] font-semibold leading-none text-destructive-foreground' aria-hidden='true'>
               {unreadPublishedListings > 99 ? '99+' : unreadPublishedListings}

@@ -1,15 +1,18 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { m } from 'motion/react';
-import { duration, ease } from '@/lib/motion';
+import { m, useReducedMotion } from 'motion/react';
+import { ease } from '@/lib/motion';
 
 export default function PageTransition({ children }: { children: ReactNode }) {
+  const reduceMotion = useReducedMotion();
+
   return (
     <m.div
-      initial={{ opacity: 0.92, y: 8 }}
+      className='page-transition'
+      initial={reduceMotion ? false : { opacity: 0.72, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: duration.base, ease }}
+      transition={{ duration: reduceMotion ? 0 : 0.62, ease }}
     >
       {children}
     </m.div>

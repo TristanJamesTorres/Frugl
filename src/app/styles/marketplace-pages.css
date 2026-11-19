@@ -1,3 +1,17 @@
+.legal-page {
+  display: grid;
+  width: 100%;
+  max-width: 80rem;
+  align-content: start;
+  gap: clamp(1rem, 2vw, 1.25rem);
+  margin-inline: auto;
+  padding-bottom: 1.5rem;
+}
+
+.legal-page > p,
+.legal-page > section {
+  max-width: 80ch;
+}
 
 .offers-list {
   display: grid;
@@ -392,14 +406,33 @@
 }
 
 .messages-participant {
+  display: flex;
   min-width: 0;
+  align-items: center;
+  gap: 0.35rem;
   color: var(--plum-900);
   font-size: 0.88rem;
   font-weight: 600;
 }
 
-.messages-participant span {
-  margin-left: 0.35rem;
+.messages-participant > img {
+  width: 1.45rem;
+  height: 1.45rem;
+  flex: 0 0 1.45rem;
+  border: 1px solid var(--lavender-300);
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.messages-participant-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.messages-participant-role {
+  flex: 0 0 auto;
   color: var(--plum-700);
   font-size: 0.72rem;
   font-weight: 400;
@@ -533,9 +566,33 @@
   min-width: 0;
 }
 
-.message-chat-listing-title,
-.message-chat-participant {
+.message-chat-listing-title {
   display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.message-chat-participant {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  gap: 0.35rem;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.message-chat-participant > img {
+  width: 1.2rem;
+  height: 1.2rem;
+  flex: 0 0 1.2rem;
+  border: 1px solid var(--lavender-300);
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.message-chat-participant > span {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

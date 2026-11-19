@@ -2,7 +2,7 @@ import Link from 'next/link';
 
 export default function TermsPage() {
   return (
-    <div className='mx-auto max-w-3xl space-y-6 px-4 py-8'>
+    <div className='legal-page'>
       <Link href='/' className='text-sm font-medium text-blue-600 hover:underline'>
         ← Back to Frugl home
       </Link>

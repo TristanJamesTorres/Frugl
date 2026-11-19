@@ -109,7 +109,7 @@
   transform: none;
 }
 
-button,
+button:not(.location-autocomplete-item),
 [data-slot='button'],
 [role='button'],
 a[class*='-btn'],

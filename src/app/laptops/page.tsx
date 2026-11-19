@@ -41,7 +41,7 @@ const opts = (arr: string[]) => arr.map((v) => ({ value: v, label: v }));
 
 function Sel({ name, label, value, options, any = true }: { name: string; label: string; value?: string; options: { value: string; label: string; disabled?: boolean }[]; any?: boolean }) {
   return (
-    <label className='block text-sm'>
+    <label className='browse-filter-select-label block text-sm'>
       <span className='browse-filter-caption'>{label}</span>
       <select name={name} defaultValue={value ?? ''} className={field}>
         {any && <option value=''>Any</option>}

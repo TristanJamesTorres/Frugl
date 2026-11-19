@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { CARD_SELECT_WITH_SAVED } from '@/lib/queries';
 import TimeAgo from '@/components/TimeAgo';
-import { BadgeCheck } from '@/components/icons';
+import { BadgeCheck, MapPin } from '@/components/icons';
 import SellerListings from './SellerListings';
 
 function isMissingProfileDetailColumn(error: { code?: string; message: string }) {
@@ -24,7 +24,7 @@ export default async function SellerPage({ params }: { params: Promise<{ id: str
   ] = await Promise.all([
     supabase
       .from('profiles')
-      .select('id,name,avatar_url,seller_verified,public_contact_email,created_at')
+      .select('id,name,avatar_url,seller_verified,public_contact_email,default_location,created_at')
       .eq('id', id)
       .maybeSingle(),
     supabase.auth.getUser(),
@@ -63,6 +63,9 @@ export default async function SellerPage({ params }: { params: Promise<{ id: str
   const list = reviews.data ?? [];
   const avg = list.length ? list.reduce((s: number, r: any) => s + r.rating, 0) / list.length : null;
   const sellerName = seller.name?.trim() || 'Seller';
+  const sellerLocation = [publicDetails?.city, publicDetails?.region].filter(Boolean).join(', ')
+    || seller.default_location?.trim()
+    || '';
   const email = isOwnProfile
     ? user.email || seller.public_contact_email
     : seller.public_contact_email;
@@ -93,10 +96,13 @@ export default async function SellerPage({ params }: { params: Promise<{ id: str
             ) : (
               <span className='seller-profile-email is-private'>Email not shared</span>
             )}
-            {(publicDetails?.city || publicDetails?.region || publicDetails?.bio) && (
+            {(sellerLocation || publicDetails?.bio) && (
               <div className='seller-profile-public-info'>
-                {(publicDetails.city || publicDetails.region) && (
-                  <span>{[publicDetails.city, publicDetails.region].filter(Boolean).join(', ')}</span>
+                {sellerLocation && (
+                  <span className='seller-profile-location'>
+                    <MapPin size={14} aria-hidden='true' />
+                    {sellerLocation}
+                  </span>
                 )}
                 {publicDetails.bio && <p>{publicDetails.bio}</p>}
               </div>

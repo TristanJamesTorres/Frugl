@@ -99,6 +99,7 @@ export default async function TopBar() {
                 <ProfileMenu
                   userId={user.id}
                   name={profile?.name ?? null}
+                  avatarUrl={profile?.avatar_url ?? null}
                   email={user.email}
                   isAdmin={profile?.role === 'admin'}
                   canAccessAdmin={isStaff(profile)}

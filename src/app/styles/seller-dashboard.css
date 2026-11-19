@@ -155,8 +155,14 @@
 }
 
 .seller-profile-public-info > span {
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  align-items: center;
+  gap: 0.3rem;
   color: var(--plum-700);
   font-size: 0.76rem;
+  overflow-wrap: anywhere;
 }
 
 .seller-profile-public-info > p {

@@ -72,8 +72,12 @@ export default function InboxShell({ conversations, currentUserId, loadError, ch
                   <div className='messages-conversation-content'>
                     <div className='messages-conversation-heading'>
                       <p className='messages-participant'>
-                        {otherParty?.name || 'User'}
-                        <span>{isBuyer ? 'Seller' : 'Buyer'}</span>
+                        {otherParty?.avatar_url && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={otherParty.avatar_url} alt='' />
+                        )}
+                        <span className='messages-participant-name'>{otherParty?.name || 'User'}</span>
+                        <span className='messages-participant-role'>{isBuyer ? 'Seller' : 'Buyer'}</span>
                       </p>
                       <span className='messages-time'>
                         <TimeAgo timestamp={latestMessage?.sent_at || conversation.updated_at} />

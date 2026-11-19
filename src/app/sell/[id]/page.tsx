@@ -39,6 +39,7 @@ async function SellDraftContent({ params }: Props) {
       initialListing={listing}
       userLocation={profile?.default_location || ''}
       sellerName={profile?.name?.trim() || 'Your profile'}
+      sellerAvatarUrl={profile?.avatar_url ?? null}
     />
   );
 }

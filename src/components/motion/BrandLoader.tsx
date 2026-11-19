@@ -1,40 +1,55 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { m, useReducedMotion } from 'motion/react';
 import { Laptop } from '@/components/icons';
+import { useLoadingOverlayControls } from './LoadingOverlayContext';
 
-export default function BrandLoader() {
+export function BrandLoaderView() {
   const reduceMotion = useReducedMotion();
 
   return (
-    <div className='brand-loader' role='status' aria-label='Loading Frugl marketplace' aria-live='polite'>
+    <m.div
+      className='brand-loader'
+      role='status'
+      aria-label='Loading Frugl marketplace'
+      aria-live='polite'
+      initial={false}
+      animate={{ opacity: 1 }}
+      exit={{
+        opacity: 0,
+        transition: reduceMotion ? { duration: 0 } : { duration: 0.52, ease: [0.4, 0, 1, 1] },
+      }}
+    >
       <div className='brand-loader-content'>
-        <div className='brand-loader-art' aria-hidden='true'>
-          <m.div
-            className='brand-loader-orbit'
-            animate={reduceMotion ? { rotate: 0 } : { rotate: 360 }}
-            transition={reduceMotion ? undefined : { duration: 12, repeat: Infinity, ease: 'linear' }}
-          >
-            <span className='brand-loader-orbit-dot' />
-          </m.div>
-          <m.div
-            className='brand-loader-device'
-            animate={reduceMotion ? { y: 0 } : { y: [0, -5, 0] }}
-            transition={reduceMotion ? undefined : { duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
-          >
-            <Laptop size={42} />
-          </m.div>
-          <span className='brand-loader-spark' />
-        </div>
+        <m.div
+          className='brand-loader-icon'
+          aria-hidden='true'
+          initial={false}
+          animate={reduceMotion ? { scale: 1 } : { scale: [1, 1.08, 1] }}
+          transition={reduceMotion ? { duration: 0 } : { duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
+        >
+          <Laptop size={56} />
+        </m.div>
         <p className='brand-loader-wordmark'>Frugl</p>
         <p className='brand-loader-message'>Good finds take a moment.</p>
-        <div className='brand-loader-progress' aria-hidden='true'>
-          <m.span
-            animate={reduceMotion ? { x: 0 } : { x: ['-110%', '210%'] }}
-            transition={reduceMotion ? undefined : { duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-          />
-        </div>
       </div>
-    </div>
+    </m.div>
   );
+}
+
+export default function BrandLoader() {
+  const { startLoading, stopLoading } = useLoadingOverlayControls();
+  const [isManaged, setIsManaged] = useState(false);
+
+  useEffect(() => {
+    startLoading();
+    const frame = window.requestAnimationFrame(() => setIsManaged(true));
+    return () => {
+      window.cancelAnimationFrame(frame);
+      stopLoading();
+    };
+  }, [startLoading, stopLoading]);
+
+  return isManaged ? null : <BrandLoaderView />;
 }

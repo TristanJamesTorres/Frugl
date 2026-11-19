@@ -21,6 +21,7 @@ interface Props {
   initialListing: any;
   userLocation: string;
   sellerName: string;
+  sellerAvatarUrl: string | null;
 }
 
 interface ListingPhoto {
@@ -45,7 +46,7 @@ async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs = 30_0
   }
 }
 
-export default function EditDraftForm({ initialListing, userLocation, sellerName }: Props) {
+export default function EditDraftForm({ initialListing, userLocation, sellerName, sellerAvatarUrl }: Props) {
   const router = useRouter();
 
   // Core listing state
@@ -706,6 +707,7 @@ export default function EditDraftForm({ initialListing, userLocation, sellerName
           description={description}
           photos={photoUrls}
           sellerName={sellerName}
+          sellerAvatarUrl={sellerAvatarUrl}
           specs={[
             { label: 'CPU', value: cpu },
             { label: 'GPU', value: gpu },

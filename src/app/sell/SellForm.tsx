@@ -20,12 +20,13 @@ interface PhotoItem {
 
 interface Props {
   sellerName: string;
+  sellerAvatarUrl: string | null;
   location: string;
 }
 
 const PHOTO_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
-export default function SellForm({ sellerName, location }: Props) {
+export default function SellForm({ sellerName, sellerAvatarUrl, location }: Props) {
   const router = useRouter();
   const reduceMotion = useReducedMotion();
 
@@ -599,6 +600,7 @@ export default function SellForm({ sellerName, location }: Props) {
           location={location}
           photos={photos.map((photo) => photo.previewUrl)}
           sellerName={sellerName}
+          sellerAvatarUrl={sellerAvatarUrl}
           specs={[
             { label: 'CPU', value: cpu },
             { label: 'GPU', value: gpu },

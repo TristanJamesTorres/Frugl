@@ -10,6 +10,7 @@ interface LocationAutocompleteProps {
   value: string;
   onChange: (value: string, selection: LocationSelection | null) => void;
   required?: boolean;
+  showLabel?: boolean;
 }
 
 export interface LocationSelection {
@@ -23,6 +24,7 @@ export default function LocationAutocomplete({
   value,
   onChange,
   required = true,
+  showLabel = true,
 }: LocationAutocompleteProps) {
   const [query, setQuery] = useState(value || '');
   const [suggestions, setSuggestions] = useState<LocationSuggestion[]>([]);
@@ -161,9 +163,7 @@ export default function LocationAutocomplete({
       </Popover>
 
       <div
-        className={`location-autocomplete-box${showWarning ? ' is-warning' : ''}${
-          isOpen ? ' is-focused' : ''
-        }`}
+        className={`location-autocomplete-box${showLabel ? '' : ' is-compact'}${showWarning ? ' is-warning' : ''}`}
         onClick={() => inputRef.current?.focus()}
       >
         <span className='location-autocomplete-pin' aria-hidden='true'>
@@ -171,9 +171,11 @@ export default function LocationAutocomplete({
         </span>
 
         <div className='location-autocomplete-content'>
-          <label htmlFor={id} className='location-autocomplete-label'>
-            Location {required && <span className='text-red-500'>*</span>}
-          </label>
+          {showLabel && (
+            <label htmlFor={id} className='location-autocomplete-label'>
+              Location {required && <span className='text-red-500'>*</span>}
+            </label>
+          )}
           <input
             ref={inputRef}
             id={id}

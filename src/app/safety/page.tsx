@@ -1,6 +1,12 @@
+import Link from 'next/link';
+
 export default function SafetyPage() {
   return (
-    <div className='mx-auto max-w-2xl space-y-6'>
+    <div className='legal-page'>
+      <Link href='/' className='text-sm font-medium text-blue-600 hover:underline'>
+        ← Back to Frugl home
+      </Link>
+
       <h1 className='text-2xl font-semibold'>Safety and rules</h1>
 
       <section>

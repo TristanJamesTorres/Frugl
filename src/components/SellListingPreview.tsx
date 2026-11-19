@@ -18,6 +18,7 @@ type Props = {
   photos: string[];
   specs?: PreviewSpec[];
   sellerName?: string;
+  sellerAvatarUrl?: string | null;
 };
 
 export default function SellListingPreview({
@@ -29,8 +30,10 @@ export default function SellListingPreview({
   photos,
   specs = [],
   sellerName = 'Your profile',
+  sellerAvatarUrl,
 }: Props) {
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
+  const [failedSellerAvatarUrl, setFailedSellerAvatarUrl] = useState<string | null>(null);
   const activePhotoIndex = Math.min(selectedPhotoIndex, Math.max(photos.length - 1, 0));
   const visibleSpecs = specs
     .filter((spec) => spec.value !== undefined && spec.value !== null && String(spec.value).trim())
@@ -149,7 +152,12 @@ export default function SellListingPreview({
         <div className='listing-preview-seller'>
           <h3>Seller information</h3>
           <div>
-            <span aria-hidden='true'>{sellerName.trim().charAt(0).toUpperCase() || 'Y'}</span>
+            {sellerAvatarUrl && failedSellerAvatarUrl !== sellerAvatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={sellerAvatarUrl} alt='' onError={() => setFailedSellerAvatarUrl(sellerAvatarUrl)} />
+            ) : (
+              <span aria-hidden='true'>{sellerName.trim().charAt(0).toUpperCase() || 'Y'}</span>
+            )}
             <strong>{sellerName}</strong>
           </div>
         </div>

@@ -15,6 +15,7 @@ async function AuthenticatedSellPage() {
   return (
     <SellForm
       sellerName={profile?.name ?? 'Your profile'}
+      sellerAvatarUrl={profile?.avatar_url ?? null}
       location={profile?.default_location ?? ''}
     />
   );

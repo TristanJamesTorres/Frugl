@@ -42,13 +42,13 @@ async function AdminDashboardContent() {
       .select('id, title, price, created_at, seller:profiles!listings_seller_id_fkey(name)')
       .eq('status', 'pending_review')
       .order('created_at', { ascending: false })
-      .limit(2),
+      .limit(3),
     supabase.from('profiles').select('id', { count: 'exact', head: true }),
     supabase
       .from('chat_alerts')
       .select('id, matched_phrases, created_at, messages(body, sender:profiles!messages_sender_id_fkey(name))')
       .order('created_at', { ascending: false })
-      .limit(2),
+      .limit(3),
     getAdminMemberLocations(supabase),
   ]);
 
